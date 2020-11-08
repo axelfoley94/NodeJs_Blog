@@ -12,7 +12,7 @@ app.set('view engine','ejs');
 //     next();
 // });
 app.use(methodOverride('_method'));
-app.use(express.urlencoded({extended:false})) //elérjük vele az input mezőket req.body.title igy hivatkozva
+app.use(express.urlencoded({extended:false})) //input field -> with req.body.title
 
 app.use('/v1/articles/',articleRouter);
 
