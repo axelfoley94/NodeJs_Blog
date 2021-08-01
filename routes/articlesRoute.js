@@ -1,41 +1,22 @@
 const express = require('express');
 const { findById } = require('../models/articleModel');
 const router = express.Router();
-const Article = require('../models/articleModel')
+const {newPage,newArticle,findAllArticles} = require('../controller/articleController');
+const Article = require('../models/articleModel');
 
 
 
 const ee = (req,res,next,val) => {
+    console.log(req)
     console.log("middleware");
     next()
 }
 
 router.route('/new')
-    .get( (req,res) => {
-        const article = new Article();
-        res.render('articles/new',{article:article})
-    })
-    .post(async (req,res) => {
-        try{
-            const article = await Article.create({
-                title: req.body.title,
-                description: req.body.description,
-                markdown: req.body.markdown
-            })
-            res.redirect(`/v1/articles/${article.slug}`);
-            
-        }catch(e){
-            console.log(e);
-            res.render('articles/new');
-        }
-        
-    })
+    .get(newPage)
+    .post(newArticle)
 
-router.get('/', async (req,res) => {
-    const articles = await Article.find()
-
-    res.render('articles/index',{articles : articles});
-},ee);
+router.get('/', findAllArticles);
 
 router.post('/search_results',async (req,res) => {
     
@@ -44,6 +25,10 @@ router.post('/search_results',async (req,res) => {
     res.render('articles/index',{articles : articles});
 })
 
+// router.param("id", (req, res, next, id) => {
+//     console.log("This function will be called first");
+//     next();
+// });
 
 router.route('/edit/:id')
     .get(async (req,res) => {
@@ -52,16 +37,13 @@ router.route('/edit/:id')
         res.render('articles/edit',{article : article});
     })
     .patch(async (req,res) => {
-        let article = await Article.findById(req.params.id)
-        article.title = req.body.title;
-        article.description = req.body.description;
-        article.markdown = req.body.markdown;
-        try{
-            article = await article.save();
-            res.redirect('/v1/articles');
-        }catch(e){
-            console.log(e);
+        let article = {
+            title: req.body.title,
+            description: req.body.description,
+            markdown: req.body.markdown
         }
+
+        Article.findByIdAndUpdate(req.params.id,article,(err,doc)=> res.redirect('/v1/articles'));
        
     })
 
@@ -77,10 +59,15 @@ router.route('/:slug')
         }
         
     } )
-    //.patch()
+
 router.delete('/:id', async (req,res) => {
-    await Article.findByIdAndDelete(req.params.id);
-    res.redirect("/v1/articles/");
+    try{
+        await Article.findByIdAndDelete(req.params.id);
+        res.redirect("/v1/articles/"); 
+    }catch{
+        console.log("error")
+    }
+    
 })
 
 module.exports = router;
